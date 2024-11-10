@@ -1,6 +1,3 @@
-
-
-
 // import React, { useState } from "react";
 // import { Link } from "react-router-dom";
 
@@ -19,30 +16,33 @@
 //     Painter: 1000,
 //     "Labour - Loading/Unloading": 800,
 //     Electrician: 650,
-//     Supervisor: 650,
+//     Supervisor: 650, // Supervisor rate is fixed at 650
 //   };
 
-//   // Initialize state with fixed roles and default values for sizeOrDays and rateValue
+//   // Initialize state with fixed roles, starting total values as 0
 //   const [formData, setFormData] = useState(
 //     roles.map((role) => ({
 //       role,
-//       sizeOrDays: role === "Carpenter" ? 1 : "",  // Carpenter has default value of 1 for sizeOrDays
+//       sizeOrDays: 0, // Initialize with 0
 //       rateValue: rates[role], // Use the rate from the rates object
-//       totalValue: role === "Carpenter" ? 1500 : "", // Default totalValue for Carpenter is 1500
+//       totalValue: 0, // Start with total value as 0
 //     }))
 //   );
 
 //   const handleChange = (index, field, value) => {
 //     const newFormData = [...formData];
 
-//     // Update sizeOrDays value dynamically
+//     // Update sizeOrDays value dynamically for all roles
 //     newFormData[index][field] = value;
 
 //     // Calculate the total value based on the sizeOrDays and rateValue for each role
 //     if (field === "sizeOrDays") {
 //       const sizeOrDays = parseFloat(value);
 //       const rateValue = newFormData[index].rateValue;
-//       newFormData[index].totalValue = sizeOrDays * rateValue;
+
+//       // If sizeOrDays is 0, set the total value to 0, otherwise calculate total
+//       newFormData[index].totalValue =
+//         sizeOrDays === 0 ? 0 : sizeOrDays * rateValue;
 //     }
 
 //     setFormData(newFormData);
@@ -50,7 +50,9 @@
 
 //   return (
 //     <div className="p-8 max-w-4xl mx-auto font-roboto">
-//       <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">Labour and Supervisor Charges</h1>
+//       <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">
+//         Labour and Supervisor Charges
+//       </h1>
 
 //       <div className="overflow-x-auto">
 //         <table className="min-w-full border border-gray-200">
@@ -58,8 +60,11 @@
 //             <tr>
 //               <th className="p-6 border-b text-lg text-gray-800">Role</th>
 //               <th className="p-6 border-b text-lg text-gray-800">Value Type</th>
-//               <th className="p-6 border-b text-lg text-gray-800">Size (m) / Days</th>
-//               <th className="p-6 border-b text-lg text-gray-800">Value</th> {/* Updated heading to "Value" */}
+//               <th className="p-6 border-b text-lg text-gray-800">Value</th>
+//               <th className="p-6 border-b text-lg text-gray-800">
+//                 Size (m) / Days
+//               </th>
+//               <th className="p-6 border-b text-lg text-gray-800">Total</th>
 //             </tr>
 //           </thead>
 //           <tbody>
@@ -67,31 +72,28 @@
 //               <tr key={index} className="hover:bg-gray-100">
 //                 <td className="p-6 border-b text-lg">{row.role}</td>
 //                 <td className="p-6 border-b text-center text-lg text-gray-700">
-//                   {row.role === "Electrician" || row.role === "Supervisor" ? "Event Days" : "Stall Size"}
+//                   {row.role === "Electrician" || row.role === "Supervisor"
+//                     ? "Event Days"
+//                     : "Stall Size"}
+//                 </td>
+//                 {/* Fixed value of 1 for each role */}
+//                 <td className="p-6 border-b text-lg text-center font-semibold">
+//                   1
 //                 </td>
 //                 <td className="p-6 border-b">
 //                   <input
 //                     type="number"
 //                     value={row.sizeOrDays}
-//                     onChange={(e) => handleChange(index, "sizeOrDays", e.target.value)}
-//                     placeholder={row.role === "Supervisor" ? "Always 3" : "Enter Size/Days"}
+//                     onChange={(e) =>
+//                       handleChange(index, "sizeOrDays", e.target.value)
+//                     }
+//                     placeholder="Enter Size/Days"
 //                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
-//                     readOnly={row.role === "Supervisor"} // Make it read-only for Supervisor
-//                   />
-//                 </td>
-//                 <td className="p-6 border-b">
-//                   <input
-//                     type="number"
-//                     value={row.rateValue}
-//                     onChange={(e) => handleChange(index, "rateValue", e.target.value)}
-//                     placeholder="Enter Value" // Updated placeholder text
-//                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
-//                     readOnly={row.role !== "Supervisor"} // Make it read-only unless it's Supervisor
 //                   />
 //                 </td>
 //                 {/* Display the total value for each role */}
 //                 <td className="p-6 border-b text-lg font-semibold">
-//                   {row.totalValue}
+//                   {row.totalValue || 0} {/* If totalValue is empty, show 0 */}
 //                 </td>
 //               </tr>
 //             ))}
@@ -114,8 +116,9 @@
 
 // export default LabourAndSupervisorCharges;
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTotalCost } from "../contexts/TotalCostContext"; // Import context hook
 
 function LabourAndSupervisorCharges() {
   const roles = [
@@ -135,35 +138,47 @@ function LabourAndSupervisorCharges() {
     Supervisor: 650, // Supervisor rate is fixed at 650
   };
 
-  // Initialize state with fixed roles and default values for sizeOrDays and rateValue
+  // Initialize state with fixed roles, starting total values as 0
   const [formData, setFormData] = useState(
     roles.map((role) => ({
       role,
-      sizeOrDays: role === "Supervisor" ? 1 : "", // Supervisor sizeOrDays is editable now
+      sizeOrDays: 0, // Initialize with 0
       rateValue: rates[role], // Use the rate from the rates object
-      totalValue: role === "Supervisor" ? 650 : "", // Total value is calculated for Supervisor
+      totalValue: 0, // Start with total value as 0
     }))
   );
+
+  const { updateTotal } = useTotalCost(); // Use context to update the total
 
   const handleChange = (index, field, value) => {
     const newFormData = [...formData];
 
-    // Update sizeOrDays value dynamically for all roles
-    newFormData[index][field] = value;
+    // Ensure that sizeOrDays is a valid positive number
+    const sizeOrDays = Math.max(0, parseFloat(value) || 0); // Ensures non-negative value
+    newFormData[index][field] = sizeOrDays;
 
     // Calculate the total value based on the sizeOrDays and rateValue for each role
-    if (field === "sizeOrDays") {
-      const sizeOrDays = parseFloat(value);
-      const rateValue = newFormData[index].rateValue;
-      newFormData[index].totalValue = sizeOrDays * rateValue;
-    }
+    newFormData[index].totalValue = sizeOrDays * newFormData[index].rateValue;
 
     setFormData(newFormData);
   };
 
+  useEffect(() => {
+    // Calculate the total charges for all roles
+    const totalLabourCharges = formData.reduce(
+      (sum, item) => sum + item.totalValue,
+      0
+    );
+
+    // Update the total cost in context
+    updateTotal("labourCost", totalLabourCharges);
+  }, [formData, updateTotal]);
+
   return (
     <div className="p-8 max-w-4xl mx-auto font-roboto">
-      <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">Labour and Supervisor Charges</h1>
+      <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">
+        Labour and Supervisor Charges
+      </h1>
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-200">
@@ -171,8 +186,11 @@ function LabourAndSupervisorCharges() {
             <tr>
               <th className="p-6 border-b text-lg text-gray-800">Role</th>
               <th className="p-6 border-b text-lg text-gray-800">Value Type</th>
-              <th className="p-6 border-b text-lg text-gray-800">Size (m) / Days</th>
-              <th className="p-6 border-b text-lg text-gray-800">Value</th> {/* Updated heading to "Value" */}
+              <th className="p-6 border-b text-lg text-gray-800">Value</th>
+              <th className="p-6 border-b text-lg text-gray-800">
+                Size (m) / Days
+              </th>
+              <th className="p-6 border-b text-lg text-gray-800">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -180,30 +198,29 @@ function LabourAndSupervisorCharges() {
               <tr key={index} className="hover:bg-gray-100">
                 <td className="p-6 border-b text-lg">{row.role}</td>
                 <td className="p-6 border-b text-center text-lg text-gray-700">
-                  {row.role === "Electrician" || row.role === "Supervisor" ? "Event Days" : "Stall Size"}
+                  {row.role === "Electrician" || row.role === "Supervisor"
+                    ? "Event Days"
+                    : "Stall Size"}
+                </td>
+                {/* Fixed value of 1 for each role */}
+                <td className="p-6 border-b text-lg text-center font-semibold">
+                  1
                 </td>
                 <td className="p-6 border-b">
                   <input
                     type="number"
                     value={row.sizeOrDays}
-                    onChange={(e) => handleChange(index, "sizeOrDays", e.target.value)}
-                    placeholder={row.role === "Supervisor" ? "Enter Size/Days" : "Enter Size/Days"}
+                    onChange={(e) =>
+                      handleChange(index, "sizeOrDays", e.target.value)
+                    }
+                    placeholder="Enter Size/Days"
                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
-                  />
-                </td>
-                <td className="p-6 border-b">
-                  <input
-                    type="number"
-                    value={row.rateValue}
-                    onChange={(e) => handleChange(index, "rateValue", e.target.value)}
-                    placeholder="Enter Value" // Updated placeholder text
-                    className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
-                    readOnly={row.role !== "Supervisor"} // Make it read-only unless it's Supervisor
                   />
                 </td>
                 {/* Display the total value for each role */}
                 <td className="p-6 border-b text-lg font-semibold">
-                  {row.totalValue}
+                  ₹{row.totalValue.toFixed(2) || 0}{" "}
+                  {/* If totalValue is empty, show 0 */}
                 </td>
               </tr>
             ))}

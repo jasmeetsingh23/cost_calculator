@@ -2,66 +2,89 @@
 // import { Link } from "react-router-dom";
 
 // function Furniture() {
-//   // Define fixed items for furniture
-//   const items = [
-//     "Revolving Chair",
-//     "Fix Chair",
-//     "Bar Stool",
-//     "Glass Table",
-//     "Sofa Seats",
-//     "Brochure Stand",
+//   // Define furniture items with their respective rates (ctc)
+//   const furnitureItems = [
+//     { name: "Revolving Chair", rate: 650 },
+//     { name: "Fix Chair", rate: 500 },
+//     { name: "Bar Stool", rate: 500 },
+//     { name: "Glass Table", rate: 600 },
+//     { name: "Sofa Seats", rate: 1200 },
+//     { name: "Brochure Stand", rate: 500 },
 //   ];
 
-//   // Initialize state for each row's size or days (always 1) and value field
+//   // Initialize state with each row's size (fixed to 1), value field (0), and total cost (0)
 //   const [formData, setFormData] = useState(
-//     items.map((item) => ({ item, sizeOrDays: 1, value: "" })) // Always set sizeOrDays to 1
+//     furnitureItems.map((item) => ({
+//       item: item.name,
+//       rate: item.rate,
+//       sizeOrDays: 1, // Fixed size to 1
+//       value: 0, // Starting custom value is 0
+//       totalCost: 0, // Initial total cost is 0
+//     }))
 //   );
 
 //   const handleChange = (index, field, value) => {
 //     const newFormData = [...formData];
-//     newFormData[index][field] = value;
+//     newFormData[index][field] = parseFloat(value) || 0;
+
+//     // Update the total cost based on the entered values
+//     if (field === "value") {
+//       newFormData[index].totalCost =
+//         newFormData[index].sizeOrDays *
+//         newFormData[index].rate *
+//         newFormData[index].value;
+//     }
+
 //     setFormData(newFormData);
 //   };
 
 //   return (
 //     <div className="p-8 max-w-4xl mx-auto font-roboto">
-//       {/* Updated title with larger font size, custom color, and margin */}
-//       <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">Furniture</h1>
-      
+//       <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">
+//         Furniture
+//       </h1>
+
 //       <div className="overflow-x-auto">
 //         <table className="min-w-full border border-gray-200">
 //           <thead>
 //             <tr>
-//               {/* Adjusted table headers with larger font size and spacing */}
 //               <th className="p-6 border-b text-lg text-gray-800">Item</th>
 //               <th className="p-6 border-b text-lg text-gray-800">Value Type</th>
-//               <th className="p-6 border-b text-lg text-gray-800">Size (m) / Days</th>
+//               <th className="p-6 border-b text-lg text-gray-800">
+//                 Size (m) / Days
+//               </th>
 //               <th className="p-6 border-b text-lg text-gray-800">Value</th>
+//               <th className="p-6 border-b text-lg text-gray-800">Total</th>
 //             </tr>
 //           </thead>
 //           <tbody>
 //             {formData.map((row, index) => (
 //               <tr key={index} className="hover:bg-gray-100">
-//                 {/* Adjusted table data with padding and font size */}
 //                 <td className="p-6 border-b text-lg">{row.item}</td>
-//                 <td className="p-6 border-b text-center text-lg text-gray-700">Quantity</td>
+//                 <td className="p-6 border-b text-center text-lg text-gray-700">
+//                   Quantity
+//                 </td>
 //                 <td className="p-6 border-b">
-//                   {/* Display sizeOrDays as 1 (non-editable) */}
 //                   <input
 //                     type="number"
 //                     value={row.sizeOrDays}
-//                     readOnly // Making it non-editable
-//                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
+//                     readOnly // Makes this input non-editable
+//                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg bg-gray-200"
 //                   />
 //                 </td>
 //                 <td className="p-6 border-b">
 //                   <input
 //                     type="number"
 //                     value={row.value}
-//                     onChange={(e) => handleChange(index, "value", e.target.value)}
+//                     onChange={(e) =>
+//                       handleChange(index, "value", e.target.value)
+//                     }
 //                     placeholder="Enter Value"
 //                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
 //                   />
+//                 </td>
+//                 <td className="p-6 border-b text-lg font-semibold">
+//                   {row.totalCost} {/* Display the calculated total */}
 //                 </td>
 //               </tr>
 //             ))}
@@ -69,16 +92,15 @@
 //         </table>
 //       </div>
 
-//       {/* Updated button section with padding, font size, and margin */}
 //       <div className="flex justify-center mt-12">
 //         <Link
-//           to="/flooring" // Navigate back to the Flooring page
+//           to="/flooring"
 //           className="bg-gray-500 text-white px-6 py-3 text-xl rounded hover:bg-gray-600 mr-4"
 //         >
 //           Back: Flooring
 //         </Link>
 //         <Link
-//           to="/transportation" // Navigate to the Transportation page
+//           to="/transportation"
 //           className="bg-blue-500 text-white px-6 py-3 text-xl rounded hover:bg-blue-600"
 //         >
 //           Next: Transportation
@@ -90,71 +112,105 @@
 
 // export default Furniture;
 
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTotalCost } from "../contexts/TotalCostContext"; // Import context hook
 
 function Furniture() {
-  // Define fixed items for furniture
-  const items = [
-    "Revolving Chair",
-    "Fix Chair",
-    "Bar Stool",
-    "Glass Table",
-    "Sofa Seats",
-    "Brochure Stand",
+  const furnitureItems = [
+    { name: "Revolving Chair", rate: 650 },
+    { name: "Fix Chair", rate: 500 },
+    { name: "Bar Stool", rate: 500 },
+    { name: "Glass Table", rate: 600 },
+    { name: "Sofa Seats", rate: 1200 },
+    { name: "Brochure Stand", rate: 500 },
   ];
 
-  // Initialize state for each row's size or days and rate value fields
   const [formData, setFormData] = useState(
-    items.map((item) => ({ item, sizeOrDays: "", value: "" })) // Changed rateValue to value
+    furnitureItems.map((item) => ({
+      item: item.name,
+      rate: item.rate,
+      sizeOrDays: 1, // Fixed size to 1
+      value: 0, // Starting custom value is 0
+      totalCost: 0, // Initial total cost is 0
+    }))
   );
+
+  const { updateTotal } = useTotalCost(); // Use context to update the total
 
   const handleChange = (index, field, value) => {
     const newFormData = [...formData];
-    newFormData[index][field] = value;
+    newFormData[index][field] = parseFloat(value) || 0;
+
+    // Update the total cost based on the entered values
+    if (field === "value") {
+      newFormData[index].totalCost =
+        newFormData[index].sizeOrDays *
+        newFormData[index].rate *
+        newFormData[index].value;
+    }
+
     setFormData(newFormData);
   };
 
+  useEffect(() => {
+    // Calculate the total furniture cost
+    const furnitureTotal = formData.reduce(
+      (sum, item) => sum + item.totalCost,
+      0
+    );
+
+    // Update the total cost in the context
+    updateTotal("furnitureCost", furnitureTotal);
+  }, [formData, updateTotal]);
+
   return (
     <div className="p-8 max-w-4xl mx-auto font-roboto">
-      {/* Updated title with larger font size, custom color, and margin */}
-      <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">Furniture</h1>
-      
+      <h1 className="text-4xl font-semibold mb-8 text-center text-blue-600">
+        Furniture
+      </h1>
+
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-200">
           <thead>
             <tr>
-              {/* Adjusted table headers with larger font size and spacing */}
               <th className="p-6 border-b text-lg text-gray-800">Item</th>
               <th className="p-6 border-b text-lg text-gray-800">Value Type</th>
-              <th className="p-6 border-b text-lg text-gray-800">Size (m) / Days</th>
-              <th className="p-6 border-b text-lg text-gray-800">Value</th> {/* Changed from Rate Value to Value */}
+              <th className="p-6 border-b text-lg text-gray-800">
+                Size (m) / Days
+              </th>
+              <th className="p-6 border-b text-lg text-gray-800">Value</th>
+              <th className="p-6 border-b text-lg text-gray-800">Total</th>
             </tr>
           </thead>
           <tbody>
             {formData.map((row, index) => (
               <tr key={index} className="hover:bg-gray-100">
-                {/* Adjusted table data with padding and font size */}
                 <td className="p-6 border-b text-lg">{row.item}</td>
-                <td className="p-6 border-b text-center text-lg text-gray-700">Quantity</td>
+                <td className="p-6 border-b text-center text-lg text-gray-700">
+                  Quantity
+                </td>
                 <td className="p-6 border-b">
                   <input
                     type="number"
                     value={row.sizeOrDays}
-                    onChange={(e) => handleChange(index, "sizeOrDays", e.target.value)}
-                    placeholder="Enter Size/Days"
-                    className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
+                    readOnly
+                    className="w-full px-4 py-3 border rounded focus:outline-none text-lg bg-gray-200"
                   />
                 </td>
                 <td className="p-6 border-b">
                   <input
                     type="number"
-                    value={row.value} // Changed rateValue to value
-                    onChange={(e) => handleChange(index, "value", e.target.value)} // Changed rateValue to value
-                    placeholder="Enter Value" // Changed placeholder text
+                    value={row.value}
+                    onChange={(e) =>
+                      handleChange(index, "value", e.target.value)
+                    }
+                    placeholder="Enter Value"
                     className="w-full px-4 py-3 border rounded focus:outline-none text-lg"
                   />
+                </td>
+                <td className="p-6 border-b text-lg font-semibold">
+                  {row.totalCost}
                 </td>
               </tr>
             ))}
@@ -162,16 +218,15 @@ function Furniture() {
         </table>
       </div>
 
-      {/* Updated button section with padding, font size, and margin */}
       <div className="flex justify-center mt-12">
         <Link
-          to="/flooring" // Navigate back to the Flooring page
+          to="/flooring"
           className="bg-gray-500 text-white px-6 py-3 text-xl rounded hover:bg-gray-600 mr-4"
         >
           Back: Flooring
         </Link>
         <Link
-          to="/transportation" // Navigate to the Transportation page
+          to="/transportation"
           className="bg-blue-500 text-white px-6 py-3 text-xl rounded hover:bg-blue-600"
         >
           Next: Transportation
